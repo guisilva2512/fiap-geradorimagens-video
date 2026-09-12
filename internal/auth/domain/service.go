@@ -20,6 +20,7 @@ type internalRepository interface {
 	Update(user *User) error
 	Delete(id string) error
 	FindByEmail(email string) (*User, error)
+	List() ([]*User, error)
 	GetByID(id string) (*User, error)
 }
 
@@ -31,6 +32,25 @@ type userService struct {
 // essa struct como um ports.UserUseCase porque ela possui os métodos necessários.
 func NewUserService(repo internalRepository) *userService {
 	return &userService{repo: repo}
+}
+
+// ListUsers retorna todos os usuários do sistema
+func (s *userService) List() ([]*User, error) {
+	return s.repo.List()
+}
+
+// GetUsers retorna um usuário específico pelo ID
+func (s *userService) Get(id string) (*User, error) {
+	existingUser, err := s.repo.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if existingUser == nil {
+		return nil, errors.New("usuário não encontrado")
+	}
+
+	return s.repo.GetByID(id)
 }
 
 // Register casa perfeitamente com a assinatura exigida por ports.UserUseCase

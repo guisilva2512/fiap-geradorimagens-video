@@ -9,13 +9,6 @@ import (
 	"github.com/guisilva2512/fiap-geradorimagens-video/internal/auth/ports"
 )
 
-//	type UserJSONRequest struct {
-//		Name     string `json:"name"`
-//		Email    string `json:"email"`
-//		Password string `json:"password"`
-//	}
-//
-
 // UserJSONRequest define o payload esperado pelo Gin
 type UserJSONRequest struct {
 	Name     string `json:"name" binding:"required"`
@@ -23,9 +16,20 @@ type UserJSONRequest struct {
 	Password string `json:"password" binding:"required,min=6"`
 }
 
+type UserJSONResponse struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
 type LoginJSONRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
+}
+
+type LoginJSONResponse struct {
+	User  UserJSONResponse `json:"user"`
+	Token string           `json:"token"`
 }
 
 type HttpUserHandler struct {
@@ -34,6 +38,48 @@ type HttpUserHandler struct {
 
 func NewHttpUserHandler(uc ports.UserUseCase) *HttpUserHandler {
 	return &HttpUserHandler{useCase: uc}
+}
+
+func (h *HttpUserHandler) ListUsers(c *gin.Context) {
+	users, err := h.useCase.List()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro interno no servidor"})
+		return
+	}
+
+	// Mapeia os usuários para o formato JSON
+	usersResponse := make([]*UserJSONResponse, len(users))
+	for i, user := range users {
+		usersResponse[i] = &UserJSONResponse{
+			ID:    user.ID,
+			Name:  user.Name,
+			Email: user.Email,
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": usersResponse})
+}
+
+func (h *HttpUserHandler) GetUser(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID do usuário é obrigatório"})
+		return
+	}
+
+	user, err := h.useCase.Get(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro interno no servidor"})
+		return
+	}
+
+	userResponse := UserJSONResponse{
+		ID:    user.ID,
+		Name:  user.Name,
+		Email: user.Email,
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": userResponse})
 }
 
 func (h *HttpUserHandler) CreateUser(c *gin.Context) {
@@ -65,12 +111,14 @@ func (h *HttpUserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
+	userResponse := UserJSONResponse{
+		ID:    user.ID,
+		Name:  user.Name,
+		Email: user.Email,
+	}
+
 	// Resposta bem-sucedida padronizada em JSON com o status 201 Created
-	c.JSON(http.StatusCreated, gin.H{
-		"id":    user.ID,
-		"name":  user.Name,
-		"email": user.Email,
-	})
+	c.JSON(http.StatusCreated, gin.H{"data": userResponse})
 }
 
 func (h *HttpUserHandler) UpdateUser(c *gin.Context) {
@@ -107,12 +155,14 @@ func (h *HttpUserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
+	userResponse := UserJSONResponse{
+		ID:    user.ID,
+		Name:  user.Name,
+		Email: user.Email,
+	}
+
 	// Resposta bem-sucedida padronizada em JSON
-	c.JSON(http.StatusOK, gin.H{
-		"id":    user.ID,
-		"name":  user.Name,
-		"email": user.Email,
-	})
+	c.JSON(http.StatusOK, gin.H{"data": userResponse})
 }
 
 func (h *HttpUserHandler) DeleteUser(c *gin.Context) {
@@ -152,10 +202,14 @@ func (h *HttpUserHandler) LoginUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"id":    user.ID,
-		"name":  user.Name,
-		"email": user.Email,
-		"token": token,
-	})
+	userLoginReponse := LoginJSONResponse{
+		Token: token,
+		User: UserJSONResponse{
+			ID:    user.ID,
+			Name:  user.Name,
+			Email: user.Email,
+		},
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": userLoginReponse})
 }
