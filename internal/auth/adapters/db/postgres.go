@@ -105,6 +105,30 @@ func (r *PostgresRepository) FindByEmail(email string) (*domain.User, error) {
 	}, nil
 }
 
+// List implementa o contrato ports.UserRepository
+func (r *PostgresRepository) List() ([]*domain.User, error) {
+	var dbUsers []GormUser
+	err := r.db.Find(&dbUsers).Error
+	if err != nil {
+		return nil, err
+	}
+
+	users := make([]*domain.User, len(dbUsers))
+	for i, dbUser := range dbUsers {
+		users[i] = &domain.User{
+			ID:           dbUser.ID,
+			Name:         dbUser.Name,
+			Email:        dbUser.Email,
+			PasswordHash: dbUser.PasswordHash,
+			IsActive:     dbUser.IsActive,
+			CreatedAt:    dbUser.CreatedAt,
+			UpdatedAt:    dbUser.UpdatedAt,
+		}
+	}
+
+	return users, nil
+}
+
 // GetByID implementa o contrato ports.UserRepository
 func (r *PostgresRepository) GetByID(id string) (*domain.User, error) {
 	var dbUser GormUser

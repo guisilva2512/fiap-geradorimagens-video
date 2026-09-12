@@ -47,3 +47,10 @@ type UpdateUserCommand struct {
 	Email    string
 	Password string
 }
+
+// LoginUserCommand colocamos a struct de comando aqui dentro do domínio.
+// Assim, o service a consome nativamente sem precisar ir buscar em 'ports'.
+type LoginUserCommand struct {
+	Email    string
+	Password string
+}

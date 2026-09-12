@@ -33,3 +33,6 @@ go.work.sum
 
 # volumes docker
 postgres-data
+
+# vscode
+.vscode

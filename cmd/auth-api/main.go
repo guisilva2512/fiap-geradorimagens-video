@@ -10,11 +10,6 @@ import (
 )
 
 func main() {
-	// // Opcional: Define o modo do Gin baseado em variáveis de ambiente (debug, release, test)
-	// if os.Getenv("GO_ENV") == "production" {
-	// 	gin.SetMode(gin.ReleaseMode)
-	// }
-
 	// 1 . Inicializa a conexão com o banco de dados (Postgres) usando GORM
 	db := authDb.InitGorm() // sua func de conexão do gorm
 
@@ -30,15 +25,16 @@ func main() {
 
 	// 5. Configura o roteamento do Gin e registra o endpoint de registro de usuário
 	r := gin.Default()
-	// r.POST("/v1/users", httpHandler.RegisterUser)
-	// r.Run("127.0.0.1:8081")
 
 	// Agrupamento de rotas e versionamento da API
 	v1 := r.Group("/v1")
 	{
+		v1.GET("/users", httpHandler.ListUsers)
+		v1.GET("/users/:id", httpHandler.GetUser)
 		v1.POST("/users", httpHandler.CreateUser)
 		v1.PUT("/users/:id", httpHandler.UpdateUser)
 		v1.DELETE("/users/:id", httpHandler.DeleteUser)
+		v1.POST("/login", httpHandler.LoginUser)
 	}
 
 	log.Println("🔑 Auth API (Gin) inicializada com sucesso!")
