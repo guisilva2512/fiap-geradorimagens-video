@@ -1,7 +1,7 @@
 -- 1. Remover Triggers
 DROP TRIGGER IF EXISTS update_video_processings_updated_at ON video_processings;
 DROP TRIGGER IF EXISTS update_video_batches_updated_at ON video_batches;
-DROP FUNCTION IF EXISTS update_updated_at_column();
+-- DROP FUNCTION IF EXISTS update_updated_at_column();
 
 -- 2. Remover Índices
 DROP INDEX IF EXISTS idx_video_processings_batch_id;

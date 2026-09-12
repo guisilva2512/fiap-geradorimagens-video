@@ -7,11 +7,12 @@ import (
 	authDb "github.com/guisilva2512/fiap-geradorimagens-video/internal/auth/adapters/db"
 	authHttp "github.com/guisilva2512/fiap-geradorimagens-video/internal/auth/adapters/http"
 	"github.com/guisilva2512/fiap-geradorimagens-video/internal/auth/domain"
+	database "github.com/guisilva2512/fiap-geradorimagens-video/internal/pkg/databases"
 )
 
 func main() {
 	// 1 . Inicializa a conexão com o banco de dados (Postgres) usando GORM
-	db := authDb.InitGorm() // sua func de conexão do gorm
+	db := database.InitGorm() // sua func de conexão do gorm
 
 	// 2. Cria o adaptador do banco (Postgres)
 	postgresRepo := authDb.NewPostgresRepository(db)
