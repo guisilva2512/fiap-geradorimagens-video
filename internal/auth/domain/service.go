@@ -2,10 +2,12 @@ package domain
 
 import (
 	"errors"
+	"os"
+	"strconv"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -109,4 +111,85 @@ func (s *userService) Delete(id string) error {
 	}
 
 	return s.repo.Delete(id)
+}
+
+// Login autentica o usuário com base no e-mail e senha fornecidos
+func (s *userService) Login(cmd LoginUserCommand) (*User, string, error) {
+	user, err := s.repo.FindByEmail(cmd.Email)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if user == nil {
+		return nil, "", errors.New("usuário não encontrado")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(cmd.Password)); err != nil {
+		return nil, "", errors.New("senha incorreta")
+	}
+
+	token, err := generateJWT(user.Name, "user")
+	if err != nil {
+		return nil, "", errors.New("falha ao gerar token JWT")
+	}
+
+	return user, token, nil
+}
+
+// CustomClaims defines the structure for data stored inside the token payload
+type CustomClaims struct {
+	Username string `json:"username"`
+	Role     string `json:"role"`
+	jwt.RegisteredClaims
+}
+
+func generateJWT(username, role string) (string, error) {
+	// Read the secret key and other JWT settings from environment variables
+	secretKey := os.Getenv("JWT_SECRET")
+	if secretKey == "" {
+		return "", errors.New("JWT_SECRET não definido no ambiente")
+	}
+
+	issuer := os.Getenv("JWT_ISSUER")
+	if issuer == "" {
+		return "", errors.New("JWT_ISSUER não definido no ambiente")
+	}
+
+	expiration := os.Getenv("JWT_EXPIRATION_HOURS")
+	if expiration == "" {
+		return "", errors.New("JWT_EXPIRATION_HOURS não definido no ambiente")
+	}
+
+	expirationHours, err := strconv.Atoi(expiration)
+	if err != nil {
+		return "", errors.New("JWT_EXPIRATION_HOURS deve ser um número")
+	}
+
+	// Define your secret key (keep this safe, ideally in environment variables)
+	var jwtKey = []byte(secretKey)
+
+	// 1. Set up the token expiration time (e.g., 2 hours)
+	expirationTime := time.Now().Add(time.Duration(expirationHours) * time.Hour)
+
+	// 2. Populate the custom and standard claims
+	claims := &CustomClaims{
+		Username: username,
+		Role:     role,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Issuer:    issuer,
+		},
+	}
+
+	// 3. Create the token using the HS256 algorithm and claims
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// 4. Sign the token with the secret key to get the final string
+	tokenString, err := token.SignedString(jwtKey)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }

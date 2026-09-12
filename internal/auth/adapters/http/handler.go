@@ -15,12 +15,17 @@ import (
 //		Password string `json:"password"`
 //	}
 //
+
 // UserJSONRequest define o payload esperado pelo Gin
 type UserJSONRequest struct {
-	// ID       string `json:"id,omitempty"` // ID é opcional no payload de criação, mas obrigatório na atualização
 	Name     string `json:"name" binding:"required"`
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=6"`
+}
+
+type LoginJSONRequest struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
 }
 
 type HttpUserHandler struct {
@@ -124,4 +129,33 @@ func (h *HttpUserHandler) DeleteUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Usuário excluído com sucesso"})
+}
+
+func (h *HttpUserHandler) LoginUser(c *gin.Context) {
+	var req LoginJSONRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos ou campos obrigatórios ausentes"})
+		return
+	}
+
+	// Monta o comando mapeado dentro de domain
+	cmd := domain.LoginUserCommand{
+		Email:    req.Email,
+		Password: req.Password,
+	}
+
+	// Executa a lógica chamando o Core (passando o contexto nativo do Go extraído do Gin)
+	user, token, err := h.useCase.Login(cmd)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Credenciais inválidas"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"id":    user.ID,
+		"name":  user.Name,
+		"email": user.Email,
+		"token": token,
+	})
 }

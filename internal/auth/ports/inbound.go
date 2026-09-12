@@ -10,4 +10,5 @@ type UserUseCase interface {
 	Create(cmd domain.CreateUserCommand) (*domain.User, error)
 	Update(cmd domain.UpdateUserCommand) (*domain.User, error)
 	Delete(id string) error
+	Login(cmd domain.LoginUserCommand) (*domain.User, string, error)
 }

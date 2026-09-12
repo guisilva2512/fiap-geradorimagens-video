@@ -39,6 +39,7 @@ func main() {
 		v1.POST("/users", httpHandler.CreateUser)
 		v1.PUT("/users/:id", httpHandler.UpdateUser)
 		v1.DELETE("/users/:id", httpHandler.DeleteUser)
+		v1.POST("/login", httpHandler.LoginUser)
 	}
 
 	log.Println("🔑 Auth API (Gin) inicializada com sucesso!")
