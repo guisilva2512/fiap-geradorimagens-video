@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"io"
 	"mime/multipart"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -28,4 +29,16 @@ func (s *AWSS3StorageAdapter) SaveFile(bucket string, key string, file multipart
 	})
 
 	return err
+}
+
+func (s *AWSS3StorageAdapter) GetFile(bucket string, key string) (io.ReadCloser, *int64, string, error) {
+	result, err := s.Client.GetObject(context.Background(), &s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return nil, nil, "", err
+	}
+
+	return result.Body, result.ContentLength, aws.ToString(result.ContentType), nil
 }

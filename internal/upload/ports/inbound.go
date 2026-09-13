@@ -1,6 +1,10 @@
 package ports
 
-import "github.com/guisilva2512/fiap-geradorimagens-video/internal/upload/domain"
+import (
+	"io"
+
+	"github.com/guisilva2512/fiap-geradorimagens-video/internal/upload/domain"
+)
 
 type VideoBatchUseCase interface {
 	// VideoBatch methods
@@ -14,4 +18,5 @@ type VideoBatchUseCase interface {
 	CreateProcessing(cmd domain.CreateVideoProcessingCommand) (*domain.VideoProcessing, error)
 	UpdateProcessing(cmd domain.UpdateVideoProcessingCommand) (*domain.VideoProcessing, error)
 	DeleteProcessing(batchId string, id string) error
+	DownloadProcessing(batchId string, id string) (io.ReadCloser, *int64, string, string, error)
 }

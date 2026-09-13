@@ -36,3 +36,8 @@ postgres-data
 
 # vscode
 .vscode
+
+# dirs uploads processing
+cmd/upload-api/uploads
+cmd/upload-api/temp
+cmd/upload-api/outputs

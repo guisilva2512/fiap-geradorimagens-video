@@ -2,8 +2,11 @@ package domain
 
 import (
 	"errors"
+	"io"
 	"mime/multipart"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,6 +31,7 @@ type UploadRepository interface {
 
 type UploadStorage interface {
 	SaveFile(bucket string, key string, file multipart.File) error
+	GetFile(bucket string, key string) (io.ReadCloser, *int64, string, error)
 }
 
 type videoBatchService struct {
@@ -100,6 +104,10 @@ func (s *videoBatchService) CreateProcessing(cmd CreateVideoProcessingCommand) (
 	storagePath := os.Getenv("AWS_S3_BUCKET") + "/" + cmd.BatchID + "/" + id + "/"
 	outputPath := storagePath + "output/"
 
+	if !isValidVideoFile(key) {
+		return nil, errors.New("invalid video file format")
+	}
+
 	// Open the file
 	file, err := cmd.File.Open()
 	if err != nil {
@@ -134,6 +142,18 @@ func (s *videoBatchService) CreateProcessing(cmd CreateVideoProcessingCommand) (
 	return processing, nil
 }
 
+func isValidVideoFile(filename string) bool {
+	ext := strings.ToLower(filepath.Ext(filename))
+	validExts := []string{".mp4", ".avi", ".mov", ".mkv", ".wmv", ".flv", ".webm"}
+
+	for _, validExt := range validExts {
+		if ext == validExt {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *videoBatchService) UpdateProcessing(cmd UpdateVideoProcessingCommand) (*VideoProcessing, error) {
 	existingProcessing, err := s.repo.GetVideoProcessingByID(cmd.BatchID, cmd.ID)
 	if err != nil {
@@ -144,6 +164,7 @@ func (s *videoBatchService) UpdateProcessing(cmd UpdateVideoProcessingCommand) (
 		return nil, errors.New("processamento de vídeo não encontrado")
 	}
 
+	// update the processing status and other fields as needed
 	existingProcessing.Status = cmd.Status
 	existingProcessing.UpdatedAt = time.Now()
 
@@ -153,6 +174,23 @@ func (s *videoBatchService) UpdateProcessing(cmd UpdateVideoProcessingCommand) (
 	}
 
 	return existingProcessing, nil
+}
+
+func (s *videoBatchService) DownloadProcessing(batchId string, id string) (io.ReadCloser, *int64, string, string, error) {
+	existingProcessing, err := s.repo.GetVideoProcessingByID(batchId, id)
+	if err != nil {
+		return nil, nil, "", "", err
+	}
+	if existingProcessing == nil {
+		return nil, nil, "", "", errors.New("processamento de vídeo não encontrado")
+	}
+
+	output, contentLength, contentType, err := s.storage.GetFile(existingProcessing.StoragePath, existingProcessing.Name)
+	if err != nil {
+		return nil, nil, "", "", err
+	}
+
+	return output, contentLength, contentType, existingProcessing.Name, nil
 }
 
 func (s *videoBatchService) DeleteProcessing(batchId string, id string) error {

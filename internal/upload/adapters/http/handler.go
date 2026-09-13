@@ -1,7 +1,16 @@
 package http
 
 import (
+	"archive/zip"
+	"errors"
+	"fmt"
+	"io"
+	"log"
 	"net/http"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/guisilva2512/fiap-geradorimagens-video/internal/upload/domain"
@@ -112,6 +121,222 @@ func (h *HttpUserHandler) CreateUpload(c *gin.Context) {
 		UpdatedAt: upload.UpdatedAt.Format("2006-01-02 15:04:05"),
 	}
 	c.JSON(http.StatusCreated, gin.H{"data": jsonUpload})
+}
+
+// DownloadUpload handles the GET /uploads/:id/download endpoint to download a specific video upload.
+func (h *HttpUserHandler) DownloadUpload(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		return
+	}
+
+	videoId := c.Param("video_id")
+	if videoId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "video_id is required"})
+		return
+	}
+
+	output, contentLength, contentType, _, err := h.useCase.DownloadProcessing(id, videoId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer output.Close()
+
+	key := videoId
+	c.Header("Content-Description", "File Transfer")
+	c.Header("Content-Disposition", "attachment; filename="+key)
+	c.Header("Content-Type", contentType)
+
+	if contentLength != nil {
+		c.DataFromReader(http.StatusOK, *contentLength, contentType, output, nil)
+		return
+	}
+
+	if contentType != "" {
+		c.DataFromReader(http.StatusOK, *contentLength, contentType, output, nil)
+		return
+	}
+
+	// Fallback streaming if Content-Length is missing
+	c.Stream(func(w io.Writer) bool {
+		_, streamErr := io.Copy(w, output)
+		if streamErr != nil && !errors.Is(streamErr, io.EOF) {
+			log.Printf("error streaming file: %v", streamErr)
+		}
+		return false // stop looping immediately
+	})
+}
+
+// Run Processing handles the GET /uploads/:id/processings/:video_id/run endpoint to run a specific video processing.
+func (h *HttpUserHandler) RunProcessing(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		return
+	}
+
+	videoId := c.Param("video_id")
+	if videoId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "video_id is required"})
+		return
+	}
+
+	output, _, _, name, err := h.useCase.DownloadProcessing(id, videoId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer output.Close()
+
+	// *****
+	timestamp := time.Now().Format("20060102_150405")
+	filename := fmt.Sprintf("%s_%s", timestamp, name)
+	videoPath := filepath.Join("uploads", filename)
+
+	out, err := os.Create(videoPath)
+	if err != nil {
+		c.JSON(500, ProcessingResult{
+			Success: false,
+			Message: "Erro ao salvar arquivo: " + err.Error(),
+		})
+		return
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, output)
+	if err != nil {
+		c.JSON(500, ProcessingResult{
+			Success: false,
+			Message: "Erro ao salvar arquivo: " + err.Error(),
+		})
+		return
+	}
+
+	result := processVideo(videoPath, timestamp)
+
+	if result.Success {
+		os.Remove(videoPath)
+	}
+	// ****
+}
+
+type ProcessingResult struct {
+	Success    bool     `json:"success"`
+	Message    string   `json:"message"`
+	ZipPath    string   `json:"zip_path,omitempty"`
+	FrameCount int      `json:"frame_count,omitempty"`
+	Images     []string `json:"images,omitempty"`
+}
+
+func processVideo(videoPath, timestamp string) ProcessingResult {
+	fmt.Printf("Iniciando processamento: %s\n", videoPath)
+
+	tempDir := filepath.Join("temp", timestamp)
+	os.MkdirAll(tempDir, 0755)
+	defer os.RemoveAll(tempDir)
+
+	framePattern := filepath.Join(tempDir, "frame_%04d.png")
+
+	cmd := exec.Command("ffmpeg",
+		"-i", videoPath,
+		"-vf", "fps=1",
+		"-y",
+		framePattern,
+	)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return ProcessingResult{
+			Success: false,
+			Message: fmt.Sprintf("Erro no ffmpeg: %s\nOutput: %s", err.Error(), string(output)),
+		}
+	}
+
+	frames, err := filepath.Glob(filepath.Join(tempDir, "*.png"))
+	if err != nil || len(frames) == 0 {
+		return ProcessingResult{
+			Success: false,
+			Message: "Nenhum frame foi extraído do vídeo",
+		}
+	}
+
+	fmt.Printf("📸 Extraídos %d frames\n", len(frames))
+
+	zipFilename := fmt.Sprintf("frames_%s.zip", timestamp)
+	zipPath := filepath.Join("outputs", zipFilename)
+
+	err = createZipFile(frames, zipPath)
+	if err != nil {
+		return ProcessingResult{
+			Success: false,
+			Message: "Erro ao criar arquivo ZIP: " + err.Error(),
+		}
+	}
+
+	fmt.Printf("✅ ZIP criado: %s\n", zipPath)
+
+	imageNames := make([]string, len(frames))
+	for i, frame := range frames {
+		imageNames[i] = filepath.Base(frame)
+	}
+
+	return ProcessingResult{
+		Success:    true,
+		Message:    fmt.Sprintf("Processamento concluído! %d frames extraídos.", len(frames)),
+		ZipPath:    zipFilename,
+		FrameCount: len(frames),
+		Images:     imageNames,
+	}
+}
+func createZipFile(files []string, zipPath string) error {
+	zipFile, err := os.Create(zipPath)
+	if err != nil {
+		return err
+	}
+	defer zipFile.Close()
+
+	zipWriter := zip.NewWriter(zipFile)
+	defer zipWriter.Close()
+
+	for _, file := range files {
+		err := addFileToZip(zipWriter, file)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func addFileToZip(zipWriter *zip.Writer, filename string) error {
+	file, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	info, err := file.Stat()
+	if err != nil {
+		return err
+	}
+
+	header, err := zip.FileInfoHeader(info)
+	if err != nil {
+		return err
+	}
+
+	header.Name = filepath.Base(filename)
+	header.Method = zip.Deflate
+
+	writer, err := zipWriter.CreateHeader(header)
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(writer, file)
+	return err
 }
 
 // DeleteUpload handles the DELETE /uploads/:id endpoint to delete a specific video upload.

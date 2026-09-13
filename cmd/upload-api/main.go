@@ -23,6 +23,13 @@ func main() {
 	videoBatchService := domain.NewVideoBatchService(repository, awsS3Storage)
 	httpHandler := videoBatchHttp.NewHttpVideoBatchHandler(videoBatchService)
 
+	//
+	dirs := []string{"uploads", "outputs", "temp"}
+	for _, dir := range dirs {
+		os.MkdirAll(dir, 0755)
+	}
+	//
+
 	r := server(httpHandler)
 
 	if err := r.Run(":8082"); err != nil {
@@ -74,6 +81,8 @@ func server(httpHandler *videoBatchHttp.HttpUserHandler) *gin.Engine {
 		v1.POST("/uploads/:id/processings", httpHandler.CreateProcessing)
 		v1.PUT("/uploads/:id/processings/:video_id", httpHandler.UpdateProcessing)
 		v1.DELETE("/uploads/:id/processings/:video_id", httpHandler.DeleteProcessing)
+		v1.GET("/uploads/:id/processings/:video_id/download", httpHandler.DownloadUpload)
+		v1.GET("/uploads/:id/processings/:video_id/run", httpHandler.RunProcessing)
 	}
 
 	log.Println("🔑 Auth API (Gin) inicializada com sucesso!")
