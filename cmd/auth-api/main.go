@@ -12,7 +12,7 @@ import (
 
 func main() {
 	// 1 . Inicializa a conexão com o banco de dados (Postgres) usando GORM
-	db := database.InitGorm() // sua func de conexão do gorm
+	db := database.Databases() // sua func de conexão do gorm
 
 	// 2. Cria o adaptador do banco (Postgres)
 	postgresRepo := authDb.NewPostgresRepository(db)

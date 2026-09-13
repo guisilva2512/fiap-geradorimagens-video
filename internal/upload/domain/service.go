@@ -2,6 +2,8 @@ package domain
 
 import (
 	"errors"
+	"mime/multipart"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -9,7 +11,7 @@ import (
 
 // Definimos uma interface local ou usamos diretamente a do ports na injeção do main.
 // Para blindar o service de importar o pacote ports, passamos a interface de repositório por parâmetro.
-type internalRepository interface {
+type UploadRepository interface {
 	// VideoBatch methods
 	List() ([]*VideoBatch, error)
 	GetByID(id string) (*VideoBatch, error)
@@ -24,14 +26,19 @@ type internalRepository interface {
 	DeleteVideoProcessing(batchId string, id string) error
 }
 
+type UploadStorage interface {
+	SaveFile(bucket string, key string, file multipart.File) error
+}
+
 type videoBatchService struct {
-	repo internalRepository
+	repo    UploadRepository
+	storage UploadStorage
 }
 
 // NewVideoBatchService retorna a struct concreta. No main.go, o Go vai aceitar
 // essa struct como um ports.VideoBatchUseCase porque ela possui os métodos necessários.
-func NewVideoBatchService(repo internalRepository) *videoBatchService {
-	return &videoBatchService{repo: repo}
+func NewVideoBatchService(repo UploadRepository, storage UploadStorage) *videoBatchService {
+	return &videoBatchService{repo: repo, storage: storage}
 }
 
 // VideoBatch methods
@@ -48,7 +55,7 @@ func (s *videoBatchService) Get(id string) (*VideoBatch, error) {
 		return nil, errors.New("lote de vídeo não encontrado")
 	}
 
-	return s.repo.GetByID(id)
+	return existingBatch, nil
 }
 
 func (s *videoBatchService) Create(cmd CreateVideoBatchCommand) (*VideoBatch, error) {
@@ -87,18 +94,39 @@ func (s *videoBatchService) ListProcessings(batchId string) ([]*VideoProcessing,
 }
 
 func (s *videoBatchService) CreateProcessing(cmd CreateVideoProcessingCommand) (*VideoProcessing, error) {
+	// Params for storage paths
+	id := uuid.New().String()
+	key := cmd.File.Filename
+	storagePath := os.Getenv("AWS_S3_BUCKET") + "/" + cmd.BatchID + "/" + id + "/"
+	outputPath := storagePath + "output/"
+
+	// Open the file
+	file, err := cmd.File.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	// Save the file to storage
+	err = s.storage.SaveFile(storagePath, key, file)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create the VideoProcessing object
 	processing := &VideoProcessing{
-		ID:          uuid.New().String(),
+		ID:          id,
 		BatchID:     cmd.BatchID,
-		Status:      cmd.Status,
-		Name:        cmd.Name,
-		StoragePath: cmd.StoragePath,
-		OutputPath:  cmd.OutputPath,
+		Status:      "PENDING",
+		Name:        key,
+		StoragePath: storagePath,
+		OutputPath:  outputPath,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
 
-	err := s.repo.CreateVideoProcessing(processing)
+	// Save the VideoProcessing object to the repository
+	err = s.repo.CreateVideoProcessing(processing)
 	if err != nil {
 		return nil, err
 	}

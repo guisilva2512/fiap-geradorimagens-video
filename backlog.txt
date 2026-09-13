@@ -1,4 +1,11 @@
--- fechar rotas e só deixar com token validos;
+-- em desenvolvimento
 -- importar minIO/s3 localmente;
+
+
+-- upload arquivo, e corrigir update e insert
+-- fechar rotas e só deixar com token validos;
 -- pegar o userId pelo token e não por josn;
--- update deixar somente o status e outupt path;
+-- testes unitarios
+-- ci/cd
+-- sonar
+-- open telemetry/ grafana+prometheus ou outro 

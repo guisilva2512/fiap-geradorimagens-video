@@ -1,6 +1,9 @@
 package domain
 
-import "time"
+import (
+	"mime/multipart"
+	"time"
+)
 
 type VideoProcessing struct {
 	ID           string
@@ -15,11 +18,13 @@ type VideoProcessing struct {
 }
 
 type CreateVideoProcessingCommand struct {
-	BatchID     string
-	Status      string
-	Name        string
-	StoragePath string
-	OutputPath  string
+	BatchID string
+	File    *multipart.FileHeader
+	// Status      string
+	// Name        string
+	// StoragePath string
+	// OutputPath  string
+
 }
 
 type UpdateVideoProcessingCommand struct {

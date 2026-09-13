@@ -19,14 +19,6 @@ type VideoBatchJSONResponse struct {
 	UpdatedAt string `json:"updated_at"`
 }
 
-type VideoProcessingJSONRequest struct {
-	// BatchID     string `json:"batch_id" binding:"required"`
-	// Status      string `json:"status" binding:"required"`
-	Name        string `json:"name" binding:"required"`
-	StoragePath string `json:"storage_path" binding:"required"`
-	OutputPath  string `json:"output_path" binding:"required"`
-}
-
 type VideoProcessingStatusUpdateRequest struct {
 	Status string `json:"status" binding:"required"`
 }
@@ -168,25 +160,22 @@ func (h *HttpUserHandler) ListProcessings(c *gin.Context) {
 }
 
 func (h *HttpUserHandler) CreateProcessing(c *gin.Context) {
+	// BatchID is passed as a URL parameter, so we don't need to bind it from the JSON request body.
 	batchId := c.Param("id")
 	if batchId == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "batch_id is required"})
 		return
 	}
 
-	var req VideoProcessingJSONRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	// File is passed as a multipart form file, so we need to get it from the request.
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "file is required"})
 		return
 	}
-
 	cmd := domain.CreateVideoProcessingCommand{
 		BatchID: batchId,
-		// Status:      req.Status,
-		Status:      "PENDING",
-		Name:        req.Name,
-		StoragePath: req.StoragePath,
-		OutputPath:  req.OutputPath,
+		File:    file,
 	}
 
 	processing, err := h.useCase.CreateProcessing(cmd)
