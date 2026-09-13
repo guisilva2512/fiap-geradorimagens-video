@@ -46,6 +46,7 @@ func (r *PostgresRepository) Create(u *domain.User) error {
 	return r.db.Create(&dbUser).Error
 }
 
+// Update implementa o contrato ports.UserRepository
 func (r *PostgresRepository) Update(u *domain.User) error {
 	dbUser := GormUser{
 		ID:           u.ID,

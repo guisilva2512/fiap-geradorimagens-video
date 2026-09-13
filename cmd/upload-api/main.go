@@ -30,10 +30,17 @@ func main() {
 	// Agrupamento de rotas e versionamento da API
 	v1 := r.Group("/v1")
 	{
+		// VideoBatch endpoints
 		v1.GET("/uploads", httpHandler.ListUploads)
 		v1.GET("/uploads/:id", httpHandler.GetUpload)
 		v1.POST("/uploads", httpHandler.CreateUpload)
 		v1.DELETE("/uploads/:id", httpHandler.DeleteUpload)
+
+		// VideoProcessing endpoints
+		v1.GET("/uploads/:id/processings", httpHandler.ListProcessings)
+		v1.POST("/uploads/:id/processings", httpHandler.CreateProcessing)
+		v1.PUT("/uploads/:id/processings/:video_id", httpHandler.UpdateProcessing)
+		v1.DELETE("/uploads/:id/processings/:video_id", httpHandler.DeleteProcessing)
 	}
 
 	log.Println("🔑 Auth API (Gin) inicializada com sucesso!")

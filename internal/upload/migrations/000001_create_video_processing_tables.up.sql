@@ -26,22 +26,17 @@ CREATE TABLE IF NOT EXISTS video_batches (
 CREATE TABLE IF NOT EXISTS video_processings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     batch_id UUID REFERENCES video_batches(id) ON DELETE SET NULL,
-    user_id UUID NOT NULL,
     status video_process_status NOT NULL DEFAULT 'PENDING',
     
     -- Dados do arquivo original
-    original_name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
     storage_path VARCHAR(512) NOT NULL,
-    file_size_bytes BIGINT NOT NULL,
     
     -- Dados pós-processamento
     output_path VARCHAR(512),
-    duration_seconds INT,
     
     -- Resiliência e erros
     error_message TEXT,
-    retry_count INT NOT NULL DEFAULT 0,
-    max_retries INT NOT NULL DEFAULT 3,
     
     -- Auditoria (padrão de compatibilidade com Go/GORM soft delete)
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -52,10 +47,6 @@ CREATE TABLE IF NOT EXISTS video_processings (
 -- 4. Criar índices performáticos e seguros
 CREATE INDEX IF NOT EXISTS idx_video_processings_status 
     ON video_processings(status) 
-    WHERE deleted_at IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_video_processings_user_id 
-    ON video_processings(user_id) 
     WHERE deleted_at IS NULL;
 
 CREATE INDEX IF NOT EXISTS idx_video_processings_batch_id 

@@ -1,0 +1,4 @@
+-- fechar rotas e só deixar com token validos;
+-- importar minIO/s3 localmente;
+-- pegar o userId pelo token e não por josn;
+-- update deixar somente o status e outupt path;
