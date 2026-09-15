@@ -1,10 +1,11 @@
 package domain
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"mime/multipart"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -34,15 +35,21 @@ type UploadStorage interface {
 	GetFile(bucket string, key string) (io.ReadCloser, *int64, string, error)
 }
 
+type QueuePublisher interface {
+	PublishMessage(ctx context.Context, body []byte) error
+}
+
 type videoBatchService struct {
 	repo    UploadRepository
 	storage UploadStorage
+	bucket  string
+	queue   QueuePublisher
 }
 
 // NewVideoBatchService retorna a struct concreta. No main.go, o Go vai aceitar
 // essa struct como um ports.VideoBatchUseCase porque ela possui os métodos necessários.
-func NewVideoBatchService(repo UploadRepository, storage UploadStorage) *videoBatchService {
-	return &videoBatchService{repo: repo, storage: storage}
+func NewVideoBatchService(repo UploadRepository, storage UploadStorage, bucket string, queue QueuePublisher) *videoBatchService {
+	return &videoBatchService{repo: repo, storage: storage, bucket: bucket, queue: queue}
 }
 
 // VideoBatch methods
@@ -97,11 +104,11 @@ func (s *videoBatchService) ListProcessings(batchId string) ([]*VideoProcessing,
 	return s.repo.ListVideoProcessings(batchId)
 }
 
-func (s *videoBatchService) CreateProcessing(cmd CreateVideoProcessingCommand) (*VideoProcessing, error) {
+func (s *videoBatchService) CreateProcessing(ctx context.Context, cmd CreateVideoProcessingCommand) (*VideoProcessing, error) {
 	// Params for storage paths
 	id := uuid.New().String()
 	key := cmd.File.Filename
-	storagePath := os.Getenv("AWS_S3_BUCKET") + "/" + cmd.BatchID + "/" + id + "/"
+	storagePath := s.bucket + "/" + cmd.BatchID + "/" + id + "/"
 	outputPath := storagePath + "output/"
 
 	if !isValidVideoFile(key) {
@@ -135,6 +142,18 @@ func (s *videoBatchService) CreateProcessing(cmd CreateVideoProcessingCommand) (
 
 	// Save the VideoProcessing object to the repository
 	err = s.repo.CreateVideoProcessing(processing)
+	if err != nil {
+		return nil, err
+	}
+
+	// Queue the processing task for further processing (e.g., video transcoding)
+	// Serialize the videoBatch object to a byte slice (e.g., using JSON)
+	bytes, err := json.Marshal(processing)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.queue.PublishMessage(ctx, bytes)
 	if err != nil {
 		return nil, err
 	}
