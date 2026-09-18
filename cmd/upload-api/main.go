@@ -11,9 +11,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gin-gonic/gin"
 	database "github.com/guisilva2512/fiap-geradorimagens-video/internal/pkg/databases"
+	commonmessaging "github.com/guisilva2512/fiap-geradorimagens-video/internal/pkg/messaging"
+	commonstorage "github.com/guisilva2512/fiap-geradorimagens-video/internal/pkg/storage"
 	videoBatchDb "github.com/guisilva2512/fiap-geradorimagens-video/internal/upload/adapters/db"
 	videoBatchHttp "github.com/guisilva2512/fiap-geradorimagens-video/internal/upload/adapters/http"
-	"github.com/guisilva2512/fiap-geradorimagens-video/internal/upload/adapters/storage"
 	"github.com/guisilva2512/fiap-geradorimagens-video/internal/upload/domain"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -65,7 +66,7 @@ func aWSStorage() domain.UploadStorage {
 		o.UsePathStyle = true
 	})
 
-	return storage.NewAWSS3StorageAdapter(client)
+	return commonstorage.NewS3(client)
 }
 
 func rabbitMQStorage() (domain.QueuePublisher, *amqp.Connection) {
@@ -84,7 +85,7 @@ func rabbitMQStorage() (domain.QueuePublisher, *amqp.Connection) {
 		log.Fatalf("Erro ao conectar ao RabbitMQ: %v", err)
 	}
 
-	rabbitMQStorage := storage.NewRabbitMQStorageAdapter(connection, rabbitMQQueueName)
+	rabbitMQStorage := commonmessaging.NewRabbitMQPublisher(connection, rabbitMQQueueName)
 
 	err = rabbitMQStorage.CreateQueue(context.Background())
 	if err != nil {

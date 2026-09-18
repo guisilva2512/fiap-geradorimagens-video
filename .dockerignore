@@ -1,0 +1,14 @@
+.git
+.gitignore
+.vscode
+postgres-data
+main.exe
+tmp
+temp
+uploads
+outputs
+*.log
+*.exe
+Dockerfile*
+docker-compose*.yml
+README.md

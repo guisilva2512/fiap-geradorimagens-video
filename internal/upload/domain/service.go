@@ -108,8 +108,8 @@ func (s *videoBatchService) CreateProcessing(ctx context.Context, cmd CreateVide
 	// Params for storage paths
 	id := uuid.New().String()
 	key := cmd.File.Filename
-	storagePath := s.bucket + "/" + cmd.BatchID + "/" + id + "/"
-	outputPath := storagePath + "output/"
+	storagePath := cmd.BatchID + "/" + id + "/" + key
+	outputPath := cmd.BatchID + "/" + id + "/output/"
 
 	if !isValidVideoFile(key) {
 		return nil, errors.New("invalid video file format")
@@ -123,7 +123,7 @@ func (s *videoBatchService) CreateProcessing(ctx context.Context, cmd CreateVide
 	defer file.Close()
 
 	// Save the file to storage
-	err = s.storage.SaveFile(storagePath, key, file)
+	err = s.storage.SaveFile(s.bucket, storagePath, file)
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +204,7 @@ func (s *videoBatchService) DownloadProcessing(batchId string, id string) (io.Re
 		return nil, nil, "", "", errors.New("processamento de vídeo não encontrado")
 	}
 
-	output, contentLength, contentType, err := s.storage.GetFile(existingProcessing.StoragePath, existingProcessing.Name)
+	output, contentLength, contentType, err := s.storage.GetFile(s.bucket, existingProcessing.StoragePath)
 	if err != nil {
 		return nil, nil, "", "", err
 	}

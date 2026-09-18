@@ -2,20 +2,11 @@ package domain
 
 import (
 	"mime/multipart"
-	"time"
+
+	processingdomain "github.com/guisilva2512/fiap-geradorimagens-video/internal/video_processing/domain"
 )
 
-type VideoProcessing struct {
-	ID           string
-	BatchID      string
-	Status       string
-	Name         string
-	StoragePath  string
-	OutputPath   string
-	ErrorMessage string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-}
+type VideoProcessing = processingdomain.VideoProcessing
 
 type CreateVideoProcessingCommand struct {
 	BatchID string

@@ -8,7 +8,14 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./postgres-data:/var/lib/postgresql
+      - postgres-data:/var/lib/postgresql
+      - ./internal/auth/migrations/000001_create_users_table.up.sql:/docker-entrypoint-initdb.d/10-auth-users.up.sql:ro
+      - ./internal/upload/migrations/000001_create_video_processing_tables.up.sql:/docker-entrypoint-initdb.d/20-upload-video-processing.up.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d root"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 # docker compose exec postgres sh
 # hostname -i
 
@@ -53,18 +60,114 @@ services:
       exit 0;
       "
 
-  # RabbitMQ service
   rabbitmq:
-    # image: "rabbitmq:3-management"
-    image: rabbitmq:3-management-alpine
+    image: rabbitmq:3-management
+    entrypoint:
+      - /bin/bash
+      - -c
+      - >-
+        chown -R rabbitmq:rabbitmq /var/lib/rabbitmq &&
+        exec /usr/local/bin/docker-entrypoint.sh rabbitmq-server
     ports:
       - "5672:5672"   # AMQP protocol port
       - "15672:15672" # RabbitMQ Management Dashboard
     environment:
       RABBITMQ_DEFAULT_USER: root
-      RABBITMQ_DEFAULT_PASS: root 
+      RABBITMQ_DEFAULT_PASS: root
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  auth-api:
+    build:
+      context: .
+      args:
+        SERVICE: auth-api
+    ports:
+      - "8081:8081"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: root
+      JWT_SECRET: your_super_secret_key_here
+      JWT_ISSUER: your_issuer_here
+      JWT_AUDIENCE: your_audience_here
+      JWT_EXPIRATION_HOURS: "2"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  upload-api:
+    build:
+      context: .
+      args:
+        SERVICE: upload-api
+    ports:
+      - "8082:8082"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: root
+      AWS_ACCESS_KEY_ID: root
+      AWS_SECRET_ACCESS_KEY: password
+      AWS_REGION: us-east-1
+      AWS_S3_ENDPOINT: http://minio:9000
+      AWS_S3_BUCKET: video-bucket
+      RABBITMQ_URL: amqp://root:root@rabbitmq:5672
+      RABBITMQ_QUEUE: video_processing_queue
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      createbuckets:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  video-worker:
+    build:
+      context: .
+      args:
+        SERVICE: video-worker
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: root
+      AWS_ACCESS_KEY_ID: root
+      AWS_SECRET_ACCESS_KEY: password
+      AWS_REGION: us-east-1
+      AWS_S3_ENDPOINT: http://minio:9000
+      AWS_S3_BUCKET: video-bucket
+      RABBITMQ_URL: amqp://root:root@rabbitmq:5672
+      RABBITMQ_QUEUE: video_processing_queue
+      FFMPEG_BINARY: ffmpeg
+      WORKER_TEMP_DIR: /tmp/video-worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      createbuckets:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   postgres-data:
   minio_data:
+  rabbitmq-data:
   
