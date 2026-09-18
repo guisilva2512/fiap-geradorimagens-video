@@ -20,4 +20,5 @@ type VideoBatchUseCase interface {
 	UpdateProcessing(cmd domain.UpdateVideoProcessingCommand) (*domain.VideoProcessing, error)
 	DeleteProcessing(batchId string, id string) error
 	DownloadProcessing(batchId string, id string) (io.ReadCloser, *int64, string, string, error)
+	WriteImagesZip(ctx context.Context, batchID string, processingID string, writer io.Writer) error
 }

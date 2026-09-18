@@ -154,6 +154,7 @@ services:
       RABBITMQ_URL: amqp://root:root@rabbitmq:5672
       RABBITMQ_QUEUE: video_processing_queue
       FFMPEG_BINARY: ffmpeg
+      VIDEO_FRAMES_PER_SECOND: "1"
       WORKER_TEMP_DIR: /tmp/video-worker
     depends_on:
       postgres:

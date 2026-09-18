@@ -200,6 +200,29 @@ func (h *HttpUserHandler) CreateProcessing(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"data": jsonProcessing})
 }
 
+func (h *HttpUserHandler) DownloadBatchImages(c *gin.Context) {
+	batchID := c.Param("id")
+	c.Header("Content-Type", "application/zip")
+	c.Header("Content-Disposition", `attachment; filename="batch-`+batchID+`-images.zip"`)
+	if err := h.useCase.WriteImagesZip(c.Request.Context(), batchID, "", c.Writer); err != nil {
+		if !c.Writer.Written() {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		}
+	}
+}
+
+func (h *HttpUserHandler) DownloadProcessingImages(c *gin.Context) {
+	batchID := c.Param("id")
+	processingID := c.Param("video_id")
+	c.Header("Content-Type", "application/zip")
+	c.Header("Content-Disposition", `attachment; filename="processing-`+processingID+`-images.zip"`)
+	if err := h.useCase.WriteImagesZip(c.Request.Context(), batchID, processingID, c.Writer); err != nil {
+		if !c.Writer.Written() {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		}
+	}
+}
+
 func (h *HttpUserHandler) UpdateProcessing(c *gin.Context) {
 	batchId := c.Param("id")
 	if batchId == "" {

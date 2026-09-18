@@ -30,7 +30,7 @@ func main() {
 
 	workerStorage := newStorage()
 	repository := uploaddb.NewPostgresVideoBatchRepository(database.Databases())
-	service := application.NewService(repository, workerStorage, processor.NewFFmpeg(getenv("FFMPEG_BINARY", "ffmpeg")), requiredEnv("AWS_S3_BUCKET"), getenv("WORKER_TEMP_DIR", os.TempDir()))
+	service := application.NewService(repository, workerStorage, processor.NewFFmpeg(getenv("FFMPEG_BINARY", "ffmpeg"), getenv("VIDEO_FRAMES_PER_SECOND", "1")), requiredEnv("AWS_S3_BUCKET"), getenv("WORKER_TEMP_DIR", os.TempDir()))
 	consumer := messaging.NewRabbitMQConsumer(connection, queueName, service)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)

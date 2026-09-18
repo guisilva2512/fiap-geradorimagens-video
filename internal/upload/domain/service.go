@@ -1,12 +1,14 @@
 package domain
 
 import (
+	"archive/zip"
 	"context"
 	"encoding/json"
 	"errors"
 	"io"
 	"mime/multipart"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -33,6 +35,8 @@ type UploadRepository interface {
 type UploadStorage interface {
 	SaveFile(bucket string, key string, file multipart.File) error
 	GetFile(bucket string, key string) (io.ReadCloser, *int64, string, error)
+	GetFileContext(ctx context.Context, bucket string, key string) (io.ReadCloser, *int64, string, error)
+	List(ctx context.Context, bucket string, prefix string) ([]string, error)
 }
 
 type QueuePublisher interface {
@@ -210,6 +214,73 @@ func (s *videoBatchService) DownloadProcessing(batchId string, id string) (io.Re
 	}
 
 	return output, contentLength, contentType, existingProcessing.Name, nil
+}
+
+func (s *videoBatchService) WriteImagesZip(ctx context.Context, batchID string, processingID string, writer io.Writer) error {
+	zipWriter := zip.NewWriter(writer)
+	defer zipWriter.Close()
+
+	type imageSource struct {
+		prefix string
+		name   string
+	}
+
+	sources := make([]imageSource, 0)
+	if processingID != "" {
+		processing, err := s.repo.GetVideoProcessingByID(batchID, processingID)
+		if err != nil {
+			return err
+		}
+		if processing == nil {
+			return errors.New("processamento de vídeo não encontrado")
+		}
+		sources = append(sources, imageSource{prefix: processing.OutputPath, name: processing.ID})
+	} else {
+		processings, err := s.repo.ListVideoProcessings(batchID)
+		if err != nil {
+			return err
+		}
+		for _, processing := range processings {
+			sources = append(sources, imageSource{prefix: processing.OutputPath, name: processing.ID})
+		}
+	}
+
+	imageCount := 0
+	for _, source := range sources {
+		keys, err := s.storage.List(ctx, s.bucket, source.prefix)
+		if err != nil {
+			return err
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			ext := strings.ToLower(filepath.Ext(key))
+			if ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
+				continue
+			}
+
+			file, _, _, err := s.storage.GetFileContext(ctx, s.bucket, key)
+			if err != nil {
+				return err
+			}
+			entryName := filepath.ToSlash(filepath.Join(source.name, filepath.Base(key)))
+			entry, err := zipWriter.Create(entryName)
+			if err != nil {
+				file.Close()
+				return err
+			}
+			if _, err := io.Copy(entry, file); err != nil {
+				file.Close()
+				return err
+			}
+			file.Close()
+			imageCount++
+		}
+	}
+
+	if imageCount == 0 {
+		return errors.New("nenhuma imagem encontrada para o download")
+	}
+	return nil
 }
 
 func (s *videoBatchService) DeleteProcessing(batchId string, id string) error {

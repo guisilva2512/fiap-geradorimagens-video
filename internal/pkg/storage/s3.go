@@ -29,7 +29,11 @@ func (s *S3) SaveFile(bucket string, key string, file multipart.File) error {
 }
 
 func (s *S3) GetFile(bucket string, key string) (io.ReadCloser, *int64, string, error) {
-	result, err := s.client.GetObject(context.Background(), &s3.GetObjectInput{
+	return s.GetFileContext(context.Background(), bucket, key)
+}
+
+func (s *S3) GetFileContext(ctx context.Context, bucket string, key string) (io.ReadCloser, *int64, string, error) {
+	result, err := s.client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
@@ -59,7 +63,7 @@ func (s *S3) Download(ctx context.Context, bucket string, key string, destinatio
 	return err
 }
 
-func (s *S3) Upload(ctx context.Context, bucket string, key string, source string) error {
+func (s *S3) Upload(ctx context.Context, bucket string, key string, source string, contentType string) error {
 	file, err := os.Open(source)
 	if err != nil {
 		return err
@@ -70,10 +74,29 @@ func (s *S3) Upload(ctx context.Context, bucket string, key string, source strin
 		Bucket:      aws.String(bucket),
 		Key:         aws.String(key),
 		Body:        file,
-		ContentType: aws.String("video/mp4"),
+		ContentType: aws.String(contentType),
 	})
 	if err != nil {
 		return fmt.Errorf("put object: %w", err)
 	}
 	return nil
+}
+
+func (s *S3) List(ctx context.Context, bucket string, prefix string) ([]string, error) {
+	result, err := s.client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
+		Bucket: aws.String(bucket),
+		Prefix: aws.String(prefix),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]string, 0, len(result.Contents))
+	for _, item := range result.Contents {
+		if item.Key == nil || aws.ToString(item.Key) == prefix {
+			continue
+		}
+		objects = append(objects, aws.ToString(item.Key))
+	}
+	return objects, nil
 }

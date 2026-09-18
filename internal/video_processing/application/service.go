@@ -21,11 +21,11 @@ type Repository interface {
 
 type Storage interface {
 	Download(ctx context.Context, bucket string, key string, destination string) error
-	Upload(ctx context.Context, bucket string, key string, source string) error
+	Upload(ctx context.Context, bucket string, key string, source string, contentType string) error
 }
 
 type Processor interface {
-	Process(ctx context.Context, input string, output string) error
+	Process(ctx context.Context, input string, outputDir string) ([]string, error)
 }
 
 type Service struct {
@@ -102,18 +102,23 @@ func (s *Service) process(ctx context.Context, processing *processingdomain.Vide
 	defer os.RemoveAll(workDir)
 
 	inputPath := filepath.Join(workDir, processing.Name)
-	outputPath := filepath.Join(workDir, "output.mp4")
+	outputDir := filepath.Join(workDir, "output")
+	if err := os.MkdirAll(outputDir, 0o755); err != nil {
+		return fmt.Errorf("criar diretório de imagens: %w", err)
+	}
 	if err := s.storage.Download(ctx, s.bucket, processing.StoragePath, inputPath); err != nil {
 		return fmt.Errorf("baixar vídeo original: %w", err)
 	}
-	if err := s.processor.Process(ctx, inputPath, outputPath); err != nil {
+	files, err := s.processor.Process(ctx, inputPath, outputDir)
+	if err != nil {
 		return fmt.Errorf("processar vídeo: %w", err)
 	}
 
-	outputKey := filepath.ToSlash(filepath.Join(processing.OutputPath, "output.mp4"))
-	if err := s.storage.Upload(ctx, s.bucket, outputKey, outputPath); err != nil {
-		return fmt.Errorf("enviar vídeo processado: %w", err)
+	for _, file := range files {
+		outputKey := filepath.ToSlash(filepath.Join(processing.OutputPath, filepath.Base(file)))
+		if err := s.storage.Upload(ctx, s.bucket, outputKey, file, "image/jpeg"); err != nil {
+			return fmt.Errorf("enviar imagem processada: %w", err)
+		}
 	}
-	processing.OutputPath = outputKey
 	return nil
 }

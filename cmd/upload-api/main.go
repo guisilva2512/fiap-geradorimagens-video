@@ -110,10 +110,10 @@ func server(httpHandler *videoBatchHttp.HttpUserHandler) *gin.Engine {
 		// VideoProcessing endpoints
 		v1.GET("/uploads/:id/processings", httpHandler.ListProcessings)
 		v1.POST("/uploads/:id/processings", httpHandler.CreateProcessing)
+		v1.GET("/uploads/:id/download", httpHandler.DownloadBatchImages)
+		v1.GET("/uploads/:id/processings/:video_id/download", httpHandler.DownloadProcessingImages)
 		v1.PUT("/uploads/:id/processings/:video_id", httpHandler.UpdateProcessing)
 		v1.DELETE("/uploads/:id/processings/:video_id", httpHandler.DeleteProcessing)
-		// v1.GET("/uploads/:id/processings/:video_id/download", httpHandler.DownloadUpload)
-		// v1.GET("/uploads/:id/processings/:video_id/run", httpHandler.RunProcessing)
 	}
 
 	log.Println("🔑 Auth API (Gin) inicializada com sucesso!")
