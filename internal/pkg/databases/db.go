@@ -12,7 +12,8 @@ var (
 	err error
 )
 
-func InitGorm() *gorm.DB {
+// ConnectDatabase initializes the database connection using GORM and returns the database instance.
+func Databases() *gorm.DB {
 	dbHost := os.Getenv("DB_HOST")
 	dbPort := os.Getenv("DB_PORT")
 	dbUser := os.Getenv("DB_USER")
