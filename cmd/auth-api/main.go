@@ -25,10 +25,19 @@ func main() {
 	// O Go valida implicitamente que o userService atende à porta ports.UserUseCase
 	httpHandler := authHttp.NewHttpUserHandler(userService)
 
-	// 5. Configura o roteamento do Gin e registra o endpoint de registro de usuário
+	r := server(httpHandler)
+
+	log.Println("🔑 Auth API (Gin) inicializada com sucesso!")
+
+	// Inicia o servidor HTTP escutando na porta 8081
+	if err := r.Run(":8081"); err != nil {
+		log.Fatalf("Erro ao rodar servidor Gin: %v", err)
+	}
+}
+
+func server(httpHandler *authHttp.HttpUserHandler) *gin.Engine {
 	r := gin.Default()
 
-	// Agrupamento de rotas e versionamento da API
 	v1 := r.Group("/v1")
 	{
 		v1.POST("/users", httpHandler.CreateUser)
@@ -41,10 +50,5 @@ func main() {
 		protected.DELETE("/users/:id", httpHandler.DeleteUser)
 	}
 
-	log.Println("🔑 Auth API (Gin) inicializada com sucesso!")
-
-	// Inicia o servidor HTTP escutando na porta 8081
-	if err := r.Run(":8081"); err != nil {
-		log.Fatalf("Erro ao rodar servidor Gin: %v", err)
-	}
+	return r
 }
