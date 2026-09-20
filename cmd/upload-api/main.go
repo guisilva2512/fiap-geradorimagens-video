@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	database "github.com/guisilva2512/fiap-geradorimagens-video/internal/pkg/databases"
 	commonmessaging "github.com/guisilva2512/fiap-geradorimagens-video/internal/pkg/messaging"
+	commonmiddleware "github.com/guisilva2512/fiap-geradorimagens-video/internal/pkg/middleware"
 	commonstorage "github.com/guisilva2512/fiap-geradorimagens-video/internal/pkg/storage"
 	videoBatchDb "github.com/guisilva2512/fiap-geradorimagens-video/internal/upload/adapters/db"
 	videoBatchHttp "github.com/guisilva2512/fiap-geradorimagens-video/internal/upload/adapters/http"
@@ -99,7 +100,7 @@ func server(httpHandler *videoBatchHttp.HttpUserHandler) *gin.Engine {
 	r := gin.Default()
 
 	// Agrupamento de rotas e versionamento da API
-	v1 := r.Group("/v1")
+	v1 := r.Group("/v1", commonmiddleware.AuthMiddleware())
 	{
 		// VideoBatch endpoints
 		v1.GET("/uploads", httpHandler.ListUploads)

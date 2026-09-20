@@ -117,6 +117,8 @@ services:
       DB_USER: root
       DB_PASSWORD: root
       DB_NAME: root
+      JWT_SECRET: your_super_secret_key_here
+      JWT_ISSUER: your_issuer_here
       AWS_ACCESS_KEY_ID: root
       AWS_SECRET_ACCESS_KEY: password
       AWS_REGION: us-east-1
