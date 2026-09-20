@@ -8,6 +8,7 @@ import (
 	authHttp "github.com/guisilva2512/fiap-geradorimagens-video/internal/auth/adapters/http"
 	"github.com/guisilva2512/fiap-geradorimagens-video/internal/auth/domain"
 	database "github.com/guisilva2512/fiap-geradorimagens-video/internal/pkg/databases"
+	commonmiddleware "github.com/guisilva2512/fiap-geradorimagens-video/internal/pkg/middleware"
 )
 
 func main() {
@@ -24,19 +25,7 @@ func main() {
 	// O Go valida implicitamente que o userService atende à porta ports.UserUseCase
 	httpHandler := authHttp.NewHttpUserHandler(userService)
 
-	// 5. Configura o roteamento do Gin e registra o endpoint de registro de usuário
-	r := gin.Default()
-
-	// Agrupamento de rotas e versionamento da API
-	v1 := r.Group("/v1")
-	{
-		v1.GET("/users", httpHandler.ListUsers)
-		v1.GET("/users/:id", httpHandler.GetUser)
-		v1.POST("/users", httpHandler.CreateUser)
-		v1.PUT("/users/:id", httpHandler.UpdateUser)
-		v1.DELETE("/users/:id", httpHandler.DeleteUser)
-		v1.POST("/login", httpHandler.LoginUser)
-	}
+	r := server(httpHandler)
 
 	log.Println("🔑 Auth API (Gin) inicializada com sucesso!")
 
@@ -44,4 +33,22 @@ func main() {
 	if err := r.Run(":8081"); err != nil {
 		log.Fatalf("Erro ao rodar servidor Gin: %v", err)
 	}
+}
+
+func server(httpHandler *authHttp.HttpUserHandler) *gin.Engine {
+	r := gin.Default()
+
+	v1 := r.Group("/v1")
+	{
+		v1.POST("/users", httpHandler.CreateUser)
+		v1.POST("/login", httpHandler.LoginUser)
+
+		protected := v1.Group("", commonmiddleware.AuthMiddleware())
+		protected.GET("/users", httpHandler.ListUsers)
+		protected.GET("/users/:id", httpHandler.GetUser)
+		protected.PUT("/users/:id", httpHandler.UpdateUser)
+		protected.DELETE("/users/:id", httpHandler.DeleteUser)
+	}
+
+	return r
 }

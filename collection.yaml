@@ -1,0 +1,672 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: Scratch Pad
+meta:
+  id: wrk_scratchpad
+  created: 1767548048651
+  modified: 1767548048651
+  description: ""
+collection:
+  - name: Autenticacao
+    meta:
+      id: fld_4576fb4ca1994ea3b9e0db283dde9a8f
+      created: 1768748183013
+      modified: 1773952192917
+      sortKey: -1768748183131
+      description: ""
+  - name: Cliente
+    meta:
+      id: fld_6752121f293c4285b6e9971fe0a11ea4
+      created: 1768748183015
+      modified: 1779637136947
+      sortKey: -1768748183081
+      description: ""
+  - name: ClienteVeiculo
+    meta:
+      id: fld_7400ff7a5d0044bd918c36cc085d77d8
+      created: 1768748183017
+      modified: 1768816061780
+      sortKey: -1768748183074.75
+      description: ""
+  - name: OrdemServico
+    meta:
+      id: fld_22863a58cab64adc8ff3d05cefafe097
+      created: 1768748183023
+      modified: 1785236670485
+      sortKey: -1768748183070.0503
+      description: ""
+  - name: OrdemServicoItem
+    meta:
+      id: fld_806e2357553444b7acb976e3e5839672
+      created: 1768748183025
+      modified: 1785236673491
+      sortKey: -1768748183070.0442
+      description: ""
+  - name: Produto
+    meta:
+      id: fld_0ee4ea07bf7f477697229d5fb7d657f7
+      created: 1768748183028
+      modified: 1768821734863
+      sortKey: -1768748183071.625
+      description: ""
+  - name: Servico
+    meta:
+      id: fld_439b94095ef64c40a0b90c42bd318c56
+      created: 1768748183030
+      modified: 1774228702995
+      sortKey: -1768748183070.0625
+      description: ""
+  - name: Orcamentos
+    meta:
+      id: fld_22ca8e40cc26496487aba190431d3b44
+      created: 1783710445425
+      modified: 1785236674987
+      sortKey: -1768748183070.041
+      description: ""
+  - name: Notificacoes
+    meta:
+      id: fld_a653b68af75a43408900d547bc082bb2
+      created: 1784549220611
+      modified: 1785236664391
+      sortKey: -1768748183070.038
+      description: ""
+  - name: gerador-imagens-video
+    meta:
+      id: fld_61d6cc835a754d89ae3c53a93c0c1826
+      created: 1789223695488
+      modified: 1789223695488
+      sortKey: -1789223695488
+      description: ""
+    children:
+      - name: Users
+        meta:
+          id: fld_66ce356f80de44b486f76b7f1f68f39e
+          created: 1789223706461
+          modified: 1789223706461
+          sortKey: -1789223706461
+          description: ""
+        children:
+          - url: http://localhost:8081/v1/users
+            name: List
+            meta:
+              id: req_41f9e54b91a34a91ae814db08e89791f
+              created: 1789223711727
+              modified: 1789925894155
+              isPrivate: false
+              description: ""
+              sortKey: -1789223711727
+            method: GET
+            authentication:
+              type: bearer
+              token: "{% response 'body', 'req_4e38698de01e43ffb0655200270e0509',
+                'b64::JC5kYXRhLnRva2Vu::46b', 'when-expired', 60 %}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://localhost:8081/v1/users/902cec49-e1db-45a7-8d24-6f5d91a9fee6
+            name: Id
+            meta:
+              id: req_13cc8fa096844ee6ac78cf63e26cda3f
+              created: 1789225365415
+              modified: 1789926080806
+              isPrivate: false
+              description: ""
+              sortKey: -1786886881481.5
+            method: GET
+            authentication:
+              type: bearer
+              token: "{% response 'body', 'req_4e38698de01e43ffb0655200270e0509',
+                'b64::JC5kYXRhLnRva2Vu::46b', 'when-expired', 60 %}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://localhost:8081/v1/users
+            name: Create
+            meta:
+              id: req_57902e4ff622451da40e54916cb983ea
+              created: 1789225382649
+              modified: 1789926055134
+              isPrivate: false
+              description: ""
+              sortKey: -1786886881381.5
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                  "name": "Guilherme",
+                  "email": "guilherme2@teste.com",
+                  "password": "123456"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://localhost:8081/v1/users/902cec49-e1db-45a7-8d24-6f5d91a9fee6
+            name: Update
+            meta:
+              id: req_55e6935efa7942c6953bf3087d5bfe64
+              created: 1789225445905
+              modified: 1789926088933
+              isPrivate: false
+              description: ""
+              sortKey: -1785718466308.75
+            method: PUT
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                  "name": "Guilherme Silva",
+                  "email": "guilherme2@teste.com",
+                  "password": "123456"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+            authentication:
+              type: bearer
+              token: "{% response 'body', 'req_4e38698de01e43ffb0655200270e0509',
+                'b64::JC5kYXRhLnRva2Vu::46b', 'when-expired', 60 %}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://localhost:8081/v1/users/ba7f1d42-9f10-4a78-b71c-d0689fc973ec
+            name: Delete
+            meta:
+              id: req_7c6b8a1deb574ae48cc6c5fb5adb90fa
+              created: 1789225469448
+              modified: 1789925996271
+              isPrivate: false
+              description: ""
+              sortKey: -1785134258772.375
+            method: DELETE
+            authentication:
+              type: bearer
+              token: "{% response 'body', 'req_4e38698de01e43ffb0655200270e0509',
+                'b64::JC5kYXRhLnRva2Vu::46b', 'when-expired', 60 %}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://localhost:8081/v1/login
+            name: Login
+            meta:
+              id: req_4e38698de01e43ffb0655200270e0509
+              created: 1789225779117
+              modified: 1789926070310
+              isPrivate: false
+              description: ""
+              sortKey: -1785134258672.375
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                   "email": "guilherme2@teste.com",
+                   "password": "123456"
+                 }
+            headers:
+              - name: Accept
+                value: "*/*"
+              - name: User-Agent
+                value: Thunder Client (https://www.thunderclient.com)
+              - name: Content-Type
+                value: application/json
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+      - name: Uploads
+        meta:
+          id: fld_5671d98b731c491a8dbdc2294dcadc14
+          created: 1789249497892
+          modified: 1789249497892
+          sortKey: -1789223700974.5
+          description: ""
+        children:
+          - url: http://localhost:8082/v1/uploads/41ea239c-3786-42c6-850c-6d35f49d488b
+            name: Delete
+            meta:
+              id: req_0a08b58def824e509bee204ec2bb96bb
+              created: 1789249497892
+              modified: 1789926749201
+              isPrivate: false
+              description: ""
+              sortKey: -1785134258772.375
+            method: DELETE
+            authentication:
+              type: bearer
+              token: "{% response 'body', 'req_4e38698de01e43ffb0655200270e0509',
+                'b64::JC5kYXRhLnRva2Vu::46b', 'when-expired', 360 %}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://localhost:8082/v1/uploads/8d7367e7-20e6-46e8-b264-25b0d3e04e5f
+            name: Id
+            meta:
+              id: req_883cef00723743d0b9a16c0dccd5dec4
+              created: 1789249497892
+              modified: 1789927969412
+              isPrivate: false
+              description: ""
+              sortKey: -1786886881481.5
+            method: GET
+            authentication:
+              type: bearer
+              token: "{% response 'body', 'req_4e38698de01e43ffb0655200270e0509',
+                'b64::JC5kYXRhLnRva2Vu::46b', 'when-expired', 3600 %}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://localhost:8082/v1/uploads
+            name: Create
+            meta:
+              id: req_d241d816ae3b44f8b462b3c038396832
+              created: 1789249497892
+              modified: 1789926681580
+              isPrivate: false
+              description: ""
+              sortKey: -1788055296604.25
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                  "user_id": "75f02c9f-9b80-43d1-83d1-c02084fdcbe4"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+            authentication:
+              type: bearer
+              token: "{% response 'body', 'req_4e38698de01e43ffb0655200270e0509',
+                'b64::JC5kYXRhLnRva2Vu::46b', 'when-expired', 3600 %}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://localhost:8082/v1/uploads
+            name: List
+            meta:
+              id: req_eb225b348c754adfa1db06ab79e9761a
+              created: 1789249497892
+              modified: 1789926225913
+              isPrivate: false
+              description: ""
+              sortKey: -1789223711727
+            method: GET
+            authentication:
+              type: bearer
+              token: "{% response 'body', 'req_4e38698de01e43ffb0655200270e0509',
+                'b64::JC5kYXRhLnRva2Vu::46b', 'when-expired', 3600 %}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://localhost:8082/v1/uploads/8d7367e7-20e6-46e8-b264-25b0d3e04e5f/download
+            name: "Download zip "
+            meta:
+              id: req_b51e808b43f343d5a139680d3172b0a2
+              created: 1789694158104
+              modified: 1789927975611
+              isPrivate: false
+              description: ""
+              sortKey: -1786886881431.5
+            method: GET
+            authentication:
+              type: bearer
+              token: "{% response 'body', 'req_4e38698de01e43ffb0655200270e0509',
+                'b64::JC5kYXRhLnRva2Vu::46b', 'when-expired', 3600 %}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+      - name: Videos Upload
+        meta:
+          id: fld_e2abc9b82d59453490c4767b0ea2ba74
+          created: 1789313549991
+          modified: 1789313549991
+          sortKey: -1789223698231.25
+          description: ""
+        children:
+          - url: http://localhost:8082/v1/uploads/8d7367e7-20e6-46e8-b264-25b0d3e04e5f/processings
+            name: List
+            meta:
+              id: req_c49aaf52e67a497ab4d4c74fc9091c80
+              created: 1789313549991
+              modified: 1789926987172
+              isPrivate: false
+              description: ""
+              sortKey: -1789223711727
+            method: GET
+            authentication:
+              type: bearer
+              token: "{% response 'body', 'req_4e38698de01e43ffb0655200270e0509',
+                'b64::JC5kYXRhLnRva2Vu::46b', 'when-expired', 3600 %}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://localhost:8082/v1/uploads/e756f501-6e7c-499c-85dc-7f6d2c99a88a/processings/7861900a-b5a8-42e5-b084-b0988192d045
+            name: Delete
+            meta:
+              id: req_ca90e815d1964985a51f26904cfe89d8
+              created: 1789313549991
+              modified: 1789926844317
+              isPrivate: false
+              description: ""
+              sortKey: -1785134258772.375
+            method: DELETE
+            authentication:
+              type: bearer
+              token: "{% response 'body', 'req_4e38698de01e43ffb0655200270e0509',
+                'b64::JC5kYXRhLnRva2Vu::46b', 'when-expired', 3600 %}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://localhost:8082/v1/uploads/8d7367e7-20e6-46e8-b264-25b0d3e04e5f/processings
+            name: Create File
+            meta:
+              id: req_5fc2403e5e3e48eaba2e51a5efe70e49
+              created: 1789319563730
+              modified: 1789926901492
+              isPrivate: false
+              description: ""
+              sortKey: -1789095916322.9492
+            method: POST
+            body:
+              mimeType: multipart/form-data
+              params:
+                - name: file
+                  value: ""
+                  description: ""
+                  disabled: false
+                  fileName: C:\Users\Guilherme\Downloads\zelda.mp4
+                  type: file
+            headers:
+              - name: Content-Type
+                value: multipart/form-data
+            authentication:
+              type: bearer
+              token: "{% response 'body', 'req_4e38698de01e43ffb0655200270e0509',
+                'b64::JC5kYXRhLnRva2Vu::46b', 'when-expired', 3600 %}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://localhost:8082/v1/uploads/8d7367e7-20e6-46e8-b264-25b0d3e04e5f/processings/0b9d7142-1def-41f9-b02d-215a1f614ef9/download
+            name: "Download Zip "
+            meta:
+              id: req_dd9b8ac8f029450e8f2e478ced551270
+              created: 1789694201011
+              modified: 1789926992264
+              isPrivate: false
+              description: ""
+              sortKey: -1788968120918.8984
+            method: GET
+            authentication:
+              type: bearer
+              token: "{% response 'body', 'req_4e38698de01e43ffb0655200270e0509',
+                'b64::JC5kYXRhLnRva2Vu::46b', 'when-expired', 3600 %}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://localhost:8082/v1/uploads/8d7367e7-20e6-46e8-b264-25b0d3e04e5f/processings
+            name: Create File2
+            meta:
+              id: req_46a5118e776b495992f53d7905dcf7b5
+              created: 1789927809226
+              modified: 1789927826441
+              isPrivate: false
+              description: ""
+              sortKey: -1789032018620.9238
+            method: POST
+            body:
+              mimeType: multipart/form-data
+              params:
+                - name: file
+                  value: ""
+                  description: ""
+                  disabled: false
+                  fileName: C:\Users\Guilherme\Downloads\the witcher.mp4
+                  type: file
+            headers:
+              - name: Content-Type
+                value: multipart/form-data
+            authentication:
+              type: bearer
+              token: "{% response 'body', 'req_4e38698de01e43ffb0655200270e0509',
+                'b64::JC5kYXRhLnRva2Vu::46b', 'when-expired', 3600 %}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://localhost:8082/v1/uploads/8d7367e7-20e6-46e8-b264-25b0d3e04e5f/processings
+            name: Create File3
+            meta:
+              id: req_d8491e4990b64d73b3832547c41136bf
+              created: 1789927814447
+              modified: 1789927829986
+              isPrivate: false
+              description: ""
+              sortKey: -1789000069769.9111
+            method: POST
+            body:
+              mimeType: multipart/form-data
+              params:
+                - name: file
+                  value: ""
+                  description: ""
+                  disabled: false
+                  fileName: C:\Users\Guilherme\Downloads\final fantasy vii.mp4
+                  type: file
+            headers:
+              - name: Content-Type
+                value: multipart/form-data
+            authentication:
+              type: bearer
+              token: "{% response 'body', 'req_4e38698de01e43ffb0655200270e0509',
+                'b64::JC5kYXRhLnRva2Vu::46b', 'when-expired', 3600 %}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://localhost:8082/v1/uploads/8d7367e7-20e6-46e8-b264-25b0d3e04e5f/processings
+            name: Create File4
+            meta:
+              id: req_127ba1e0454f40999c67249670c7d72e
+              created: 1789927834496
+              modified: 1789927943040
+              isPrivate: false
+              description: ""
+              sortKey: -1788984095344.4048
+            method: POST
+            body:
+              mimeType: multipart/form-data
+              params:
+                - name: file
+                  value: ""
+                  description: ""
+                  disabled: false
+                  fileName: C:\Users\Guilherme\Downloads\elden ring.mp4
+                  type: file
+            headers:
+              - name: Content-Type
+                value: multipart/form-data
+            authentication:
+              type: bearer
+              token: "{% response 'body', 'req_4e38698de01e43ffb0655200270e0509',
+                'b64::JC5kYXRhLnRva2Vu::46b', 'when-expired', 3600 %}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_99d30891da4bdcebc63947a8fc17f076de878684
+    created: 1767548086335
+    modified: 1767548086335
+environments:
+  name: Base Environment
+  meta:
+    id: env_99d30891da4bdcebc63947a8fc17f076de878684
+    created: 1767548086331
+    modified: 1784681312784
+    isPrivate: false
+  data:
+    base_url: "{{ _.scheme }}://{{ _.host }}/{{ _.base_path }}"
+    base_url_oc: "{{ _.scheme }}://{{ _.host_orc }}/{{ _.base_path }}"
+    base_url_notf: "{{ _['scheme-notf'] }}://{{ _['host-notf'] }}/{{ _.base_path }}"
+    base_url_auth: "{{ _.scheme }}://{{ _['host-auth'] }}"
+  subEnvironments:
+    - name: localhost
+      meta:
+        id: env_e3e18d6ba903467ea74a7e13148dd8ac
+        created: 1768748183008
+        modified: 1784850928967
+        isPrivate: false
+        sortKey: 1771402079460.75
+      data:
+        scheme: http
+        host: localhost:5187
+        host_orc: localhost:5184
+        base_path: api
+        scheme-orc: http
+        host-orc: localhost:5184
+        scheme-notf: http
+        host-notf: localhost:5194
+        client_id: "1"
+        veiculo_id: "1"
+        produto1_id: "1"
+        produto2_id: "2"
+        produto3_id: "3"
+        servico1_id: "1"
+        ordem_servico_id: "1"
+    - name: AWS
+      meta:
+        id: env_1af2a6901ef146a19b2f8e6654d3320f
+        created: 1774294586894
+        modified: 1785280720473
+        isPrivate: false
+        sortKey: 1774294586894
+      data:
+        scheme: http
+        host: a8ff477f54bad4475bc61d5a26921228-1868587799.us-east-1.elb.amazonaws.com
+        scheme-auth: https
+        host-auth: a6f2346fc7104422f97d8d3267104820-1007440465.us-east-1.elb.amazonaws.com
+        base_path: api
+        scheme-orc: http
+        host_orc: a2f93b8b9b6fc41639ec6531dfdd7e97-712161598.us-east-1.elb.amazonaws.com
+        scheme-notf: http
+        host-notf: a6aaa4df918594a98af77e87134ad95c-1014455313.us-east-1.elb.amazonaws.com
+        client_id: "1"
+        veiculo_id: "1"
+        produto1_id: "1"
+        produto2_id: "2"
+        produto3_id: "3"
+        servico1_id: "1"
+        ordem_servico_id: "2"
+    - name: docker-compose
+      meta:
+        id: env_fafd77de3c7647cdbf04b40a783abbca
+        created: 1778363784023
+        modified: 1785256702664
+        isPrivate: false
+        sortKey: 1772848333177.375
+      data:
+        scheme: http
+        host: localhost:8080
+        host_orc: localhost:8090
+        scheme-notf: http
+        host-notf: localhost:9000
+        base_path: api
+        client_id: "1"
+        veiculo_id: "1"
+        produto1_id: "1"
+        produto2_id: "2"
+        produto3_id: "3"
+        servico1_id: "1"
+        ordem_servico_id: "3"
