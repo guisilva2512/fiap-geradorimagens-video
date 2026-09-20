@@ -73,6 +73,7 @@ jobs:
         with:
           args: >-
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY || github.repository }}
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
             -Dsonar.go.coverage.reportPaths=coverage.out
 
       - name: Sonar quality gate
