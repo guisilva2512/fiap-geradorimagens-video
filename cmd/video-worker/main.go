@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	database "github.com/guisilva2512/fiap-geradorimagens-video/internal/pkg/databases"
+	"github.com/guisilva2512/fiap-geradorimagens-video/internal/pkg/observability"
 	workerstorage "github.com/guisilva2512/fiap-geradorimagens-video/internal/pkg/storage"
 	uploaddb "github.com/guisilva2512/fiap-geradorimagens-video/internal/upload/adapters/db"
 	"github.com/guisilva2512/fiap-geradorimagens-video/internal/video_processing/adapters/messaging"
@@ -21,6 +23,12 @@ import (
 )
 
 func main() {
+	shutdownTracer, err := observability.InitTracer(context.Background(), "video-worker")
+	if err != nil {
+		log.Fatalf("inicializar OpenTelemetry: %v", err)
+	}
+	defer shutdownTracer(context.Background())
+
 	queueName := requiredEnv("RABBITMQ_QUEUE")
 	connection, err := amqp.Dial(requiredEnv("RABBITMQ_URL"))
 	if err != nil {
@@ -35,6 +43,14 @@ func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+
+	metricsServer := &http.Server{Addr: ":8083", Handler: observability.MetricsHandler()}
+	go func() {
+		if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Printf("servidor de metricas encerrado: %v", err)
+		}
+	}()
+	defer metricsServer.Shutdown(context.Background())
 
 	log.Printf("video worker consumindo a fila %q", queueName)
 	if err := consumer.Run(ctx); err != nil && ctx.Err() == nil {

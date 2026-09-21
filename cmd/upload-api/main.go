@@ -13,15 +13,23 @@ import (
 	database "github.com/guisilva2512/fiap-geradorimagens-video/internal/pkg/databases"
 	commonmessaging "github.com/guisilva2512/fiap-geradorimagens-video/internal/pkg/messaging"
 	commonmiddleware "github.com/guisilva2512/fiap-geradorimagens-video/internal/pkg/middleware"
+	"github.com/guisilva2512/fiap-geradorimagens-video/internal/pkg/observability"
 	commonstorage "github.com/guisilva2512/fiap-geradorimagens-video/internal/pkg/storage"
 	videoBatchDb "github.com/guisilva2512/fiap-geradorimagens-video/internal/upload/adapters/db"
 	videoBatchHttp "github.com/guisilva2512/fiap-geradorimagens-video/internal/upload/adapters/http"
 	"github.com/guisilva2512/fiap-geradorimagens-video/internal/upload/domain"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func main() {
+	shutdownTracer, err := observability.InitTracer(context.Background(), "upload-api")
+	if err != nil {
+		log.Fatalf("inicializar OpenTelemetry: %v", err)
+	}
+	defer shutdownTracer(context.Background())
+
 	repository := repository()
 	awsS3Storage := aWSStorage()
 	rabbitMQStorage, rabbitMQConnection := rabbitMQStorage()
@@ -86,7 +94,7 @@ func rabbitMQStorage() (domain.QueuePublisher, *amqp.Connection) {
 		log.Fatalf("Erro ao conectar ao RabbitMQ: %v", err)
 	}
 
-	rabbitMQStorage := commonmessaging.NewRabbitMQPublisher(connection, rabbitMQQueueName)
+	rabbitMQStorage := commonmessaging.NewRabbitMQPublisherWithReconnect(connection, rabbitMQURL, rabbitMQQueueName)
 
 	err = rabbitMQStorage.CreateQueue(context.Background())
 	if err != nil {
@@ -98,6 +106,8 @@ func rabbitMQStorage() (domain.QueuePublisher, *amqp.Connection) {
 
 func server(httpHandler *videoBatchHttp.HttpUserHandler) *gin.Engine {
 	r := gin.Default()
+	r.Use(otelgin.Middleware("upload-api"), observability.MetricsMiddleware("upload-api"))
+	r.GET("/metrics", gin.WrapH(observability.MetricsHandler()))
 
 	// Agrupamento de rotas e versionamento da API
 	v1 := r.Group("/v1", commonmiddleware.AuthMiddleware())
