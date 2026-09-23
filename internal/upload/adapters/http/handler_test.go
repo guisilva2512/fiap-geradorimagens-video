@@ -111,6 +111,25 @@ func TestVideoBatchHTTPHandlers(t *testing.T) {
 	if recorder.Code != http.StatusInternalServerError {
 		t.Fatalf("expected delete error 500, got %d", recorder.Code)
 	}
+
+	context, recorder = uploadContext(http.MethodGet, "/uploads", "")
+	NewHttpVideoBatchHandler(&videoUseCaseFake{err: errors.New("failed")}).ListUploads(context)
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatalf("expected list error 500, got %d", recorder.Code)
+	}
+
+	context, recorder = uploadContext(http.MethodGet, "/uploads/batch-1", "")
+	uploadParams(context, "batch-1")
+	NewHttpVideoBatchHandler(&videoUseCaseFake{err: errors.New("failed")}).GetUpload(context)
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatalf("expected get error 500, got %d", recorder.Code)
+	}
+
+	context, recorder = uploadContext(http.MethodPost, "/uploads", `{"user_id":"user-1"}`)
+	NewHttpVideoBatchHandler(&videoUseCaseFake{err: errors.New("failed")}).CreateUpload(context)
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatalf("expected create error 500, got %d", recorder.Code)
+	}
 }
 
 func TestProcessingHTTPHandlers(t *testing.T) {
@@ -160,6 +179,76 @@ func TestProcessingHTTPHandlers(t *testing.T) {
 	handler.DeleteProcessing(context)
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected processing delete 200, got %d", recorder.Code)
+	}
+
+	context, recorder = uploadContext(http.MethodGet, "/uploads/batch-1/processings", "")
+	uploadParams(context, "batch-1")
+	NewHttpVideoBatchHandler(&videoUseCaseFake{err: errors.New("failed")}).ListProcessings(context)
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatalf("expected processing list error 500, got %d", recorder.Code)
+	}
+
+	context, recorder = uploadContext(http.MethodPost, "/uploads//processings", "")
+	NewHttpVideoBatchHandler(&videoUseCaseFake{}).CreateProcessing(context)
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("expected missing processing batch 400, got %d", recorder.Code)
+	}
+
+	context, recorder = uploadContext(http.MethodPost, "/uploads/batch-1/processings", body.String())
+	context.Request.Header.Set("Content-Type", writer.FormDataContentType())
+	uploadParams(context, "batch-1")
+	NewHttpVideoBatchHandler(&videoUseCaseFake{err: errors.New("failed")}).CreateProcessing(context)
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatalf("expected processing create error 500, got %d", recorder.Code)
+	}
+
+	context, recorder = uploadContext(http.MethodPut, "/uploads//processings/video-1", `{}`)
+	uploadParams(context, "", "video-1")
+	NewHttpVideoBatchHandler(&videoUseCaseFake{}).UpdateProcessing(context)
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("expected missing update batch 400, got %d", recorder.Code)
+	}
+
+	context, recorder = uploadContext(http.MethodPut, "/uploads/batch-1/processings/", `{}`)
+	uploadParams(context, "batch-1", "")
+	NewHttpVideoBatchHandler(&videoUseCaseFake{}).UpdateProcessing(context)
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("expected missing update video 400, got %d", recorder.Code)
+	}
+
+	context, recorder = uploadContext(http.MethodPut, "/uploads/batch-1/processings/video-1", `{}`)
+	uploadParams(context, "batch-1", "video-1")
+	NewHttpVideoBatchHandler(&videoUseCaseFake{}).UpdateProcessing(context)
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("expected invalid update payload 400, got %d", recorder.Code)
+	}
+
+	context, recorder = uploadContext(http.MethodPut, "/uploads/batch-1/processings/video-1", `{"status":"DONE"}`)
+	uploadParams(context, "batch-1", "video-1")
+	NewHttpVideoBatchHandler(&videoUseCaseFake{err: errors.New("failed")}).UpdateProcessing(context)
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatalf("expected update error 500, got %d", recorder.Code)
+	}
+
+	context, recorder = uploadContext(http.MethodDelete, "/uploads//processings/video-1", "")
+	uploadParams(context, "", "video-1")
+	NewHttpVideoBatchHandler(&videoUseCaseFake{}).DeleteProcessing(context)
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("expected missing delete batch 400, got %d", recorder.Code)
+	}
+
+	context, recorder = uploadContext(http.MethodDelete, "/uploads/batch-1/processings/", "")
+	uploadParams(context, "batch-1", "")
+	NewHttpVideoBatchHandler(&videoUseCaseFake{}).DeleteProcessing(context)
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("expected missing delete video 400, got %d", recorder.Code)
+	}
+
+	context, recorder = uploadContext(http.MethodDelete, "/uploads/batch-1/processings/video-1", "")
+	uploadParams(context, "batch-1", "video-1")
+	NewHttpVideoBatchHandler(&videoUseCaseFake{err: errors.New("failed")}).DeleteProcessing(context)
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatalf("expected delete processing error 500, got %d", recorder.Code)
 	}
 }
 

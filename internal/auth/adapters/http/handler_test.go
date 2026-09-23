@@ -111,6 +111,20 @@ func TestCreateAndUpdateUsers(t *testing.T) {
 	if recorder.Code != http.StatusBadRequest {
 		t.Fatalf("expected missing update ID 400, got %d", recorder.Code)
 	}
+
+	context, recorder = userContext(http.MethodPut, "/users/1", `{}`)
+	context.Params = gin.Params{{Key: "id", Value: "1"}}
+	NewHttpUserHandler(&userUseCaseFake{err: errors.New("down")}).UpdateUser(context)
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("expected invalid update payload 400, got %d", recorder.Code)
+	}
+
+	context, recorder = userContext(http.MethodPut, "/users/1", `{"name":"Maria","email":"maria@example.com","password":"secret123"}`)
+	context.Params = gin.Params{{Key: "id", Value: "1"}}
+	NewHttpUserHandler(&userUseCaseFake{err: errors.New("down")}).UpdateUser(context)
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatalf("expected update error 500, got %d", recorder.Code)
+	}
 }
 
 func TestDeleteAndLoginUsers(t *testing.T) {
@@ -121,6 +135,19 @@ func TestDeleteAndLoginUsers(t *testing.T) {
 	NewHttpUserHandler(fake).DeleteUser(context)
 	if recorder.Code != http.StatusOK || fake.deleted != "1" {
 		t.Fatalf("unexpected delete: %d", recorder.Code)
+	}
+
+	context, recorder = userContext(http.MethodDelete, "/users/", "")
+	NewHttpUserHandler(&userUseCaseFake{}).DeleteUser(context)
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("expected missing delete ID 400, got %d", recorder.Code)
+	}
+
+	context, recorder = userContext(http.MethodDelete, "/users/1", "")
+	context.Params = gin.Params{{Key: "id", Value: "1"}}
+	NewHttpUserHandler(&userUseCaseFake{err: errors.New("down")}).DeleteUser(context)
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatalf("expected delete error 500, got %d", recorder.Code)
 	}
 
 	context, recorder = userContext(http.MethodPost, "/login", `{"email":"maria@example.com","password":"secret123"}`)
