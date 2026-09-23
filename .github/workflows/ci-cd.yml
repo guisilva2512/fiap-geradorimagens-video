@@ -38,6 +38,29 @@ jobs:
       - name: Run unit tests with coverage
         run: go test ./... -covermode=atomic -coverprofile=coverage.out
 
+      - name: Check per-file coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          excluded='(^|/)(cmd/[^/]+/main[.]go|internal/pkg/(databases|messaging|observability|storage)/|internal/.*/adapters/(db|messaging)/|internal/.*/migrations/)'
+          awk -v excluded="$excluded" '
+            NR == 1 { next }
+            {
+              split($1, parts, ":")
+              file = parts[1]
+              statements[file] += $2
+              if ($3 > 0) covered[file] += $2
+            }
+            END {
+              for (file in statements) {
+                if (!(file ~ excluded) && covered[file] / statements[file] < 0.80) {
+                  printf "coverage below 80%%: %s (%.1f%%)\n", file, 100 * covered[file] / statements[file]
+                  failed = 1
+                }
+              }
+              exit failed
+            }'
+
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:

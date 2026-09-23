@@ -79,8 +79,88 @@ services:
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
       interval: 5s
-      timeout: 5s
-      retries: 10
+      timeout: 15s
+      start_period: 30s
+      retries: 12
+
+  prometheus:
+    image: prom/prometheus:v3.8.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    depends_on:
+      - auth-api
+      - upload-api
+      - video-worker
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:3.5.0
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./observability/loki.yml:/etc/loki/config.yml:ro
+      - loki-data:/loki
+    command: -config.file=/etc/loki/config.yml
+    restart: unless-stopped
+
+  tempo:
+    image: grafana/tempo:2.8.2
+    ports:
+      - "3200:3200"
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - ./observability/tempo.yml:/etc/tempo/config.yml:ro
+      - tempo-data:/var/tempo
+    command: ["-config.file=/etc/tempo/config.yml"]
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.132.0
+    command: ["--config=/etc/otelcol-contrib/config.yml"]
+    ports:
+      - "4319:4317"
+      - "4320:4318"
+    volumes:
+      - ./observability/otel-collector-config.yml:/etc/otelcol-contrib/config.yml:ro
+    depends_on:
+      - tempo
+    restart: unless-stopped
+
+  alloy:
+    image: grafana/alloy:v1.10.2
+    command: run /etc/alloy/config.alloy
+    volumes:
+      - ./observability/alloy.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:12.1.1
+    ports:
+      - "3000:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    restart: unless-stopped
 
   auth-api:
     build:
@@ -99,6 +179,7 @@ services:
       JWT_ISSUER: your_issuer_here
       JWT_AUDIENCE: your_audience_here
       JWT_EXPIRATION_HOURS: "2"
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4318
     depends_on:
       postgres:
         condition: service_healthy
@@ -126,6 +207,7 @@ services:
       AWS_S3_BUCKET: video-bucket
       RABBITMQ_URL: amqp://root:root@rabbitmq:5672
       RABBITMQ_QUEUE: video_processing_queue
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4318
     depends_on:
       postgres:
         condition: service_healthy
@@ -158,6 +240,9 @@ services:
       FFMPEG_BINARY: ffmpeg
       VIDEO_FRAMES_PER_SECOND: "1"
       WORKER_TEMP_DIR: /tmp/video-worker
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4318
+    ports:
+      - "8083:8083"
     depends_on:
       postgres:
         condition: service_healthy
@@ -173,4 +258,8 @@ volumes:
   postgres-data:
   minio_data:
   rabbitmq-data:
+  prometheus-data:
+  grafana-data:
+  loki-data:
+  tempo-data:
   
