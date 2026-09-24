@@ -46,6 +46,7 @@ func main() {
 
 func server(httpHandler *authHttp.HttpUserHandler) *gin.Engine {
 	r := gin.Default()
+	r.Use(commonmiddleware.CORSMiddleware())
 	r.Use(otelgin.Middleware("auth-api"), observability.MetricsMiddleware("auth-api"))
 	r.GET("/metrics", gin.WrapH(observability.MetricsHandler()))
 
