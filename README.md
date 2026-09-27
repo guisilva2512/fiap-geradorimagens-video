@@ -20,6 +20,7 @@ docker compose up -d --build
 
 Serviços principais:
 
+- Frontend: `http://localhost:5173`
 - Auth API: `http://localhost:8081`
 - Upload API: `http://localhost:8082`
 - Grafana: `http://localhost:3000`
@@ -34,6 +35,10 @@ Consulte [docs/local-development.md](docs/local-development.md) para pré-requis
 3. Crie um lote em `POST /v1/uploads`.
 4. Envie um vídeo em `POST /v1/uploads/:id/processings`.
 5. Consulte o status e baixe as imagens.
+
+O frontend React cobre esse fluxo em uma interface web: cadastre-se, faça login,
+selecione ou crie um lote, envie vídeos e acompanhe o processamento. O token JWT
+fica salvo apenas no `localStorage` do navegador para autenticar as requisições.
 
 Os exemplos completos estão em [docs/api.md](docs/api.md). A collection para importação no Insomnia está em [collection.yaml](collection.yaml).
 

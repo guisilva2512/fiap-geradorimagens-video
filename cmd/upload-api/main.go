@@ -106,6 +106,7 @@ func rabbitMQStorage() (domain.QueuePublisher, *amqp.Connection) {
 
 func server(httpHandler *videoBatchHttp.HttpUserHandler) *gin.Engine {
 	r := gin.Default()
+	r.Use(commonmiddleware.CORSMiddleware())
 	r.Use(otelgin.Middleware("upload-api"), observability.MetricsMiddleware("upload-api"))
 	r.GET("/metrics", gin.WrapH(observability.MetricsHandler()))
 
